@@ -1,5 +1,7 @@
 /**
  * RollupHelper
+ * Permet d'effectuer des rollups (récapitulatifs de cumul) sur des champs Lookup
+ * 
  * @see https://gist.github.com/grotib/838a40928d17d241f974319f04336bc3/edit
  * 
  * @version 1.0
