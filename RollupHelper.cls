@@ -1,9 +1,16 @@
+/**
+ * RollupHelper
+ * @see https://gist.github.com/grotib/838a40928d17d241f974319f04336bc3/edit
+ * 
+ * @version 1.0
+ * @author Thibault Weber - SYNEFO
+ */
 public class RollupHelper {
 
 	//Liste des types d'aggregation possibles
 	public Enum Aggregation {COUNT, SUM, MIN, MAX, CONCAT}
 	
-	//Liste des opérateurs disponibles dans les filters de Rollup
+	//Liste des opérateurs disponibles dans les filtres de Rollup
 	public Enum Operator {
 						EQ, 
 						NOT_EQ,

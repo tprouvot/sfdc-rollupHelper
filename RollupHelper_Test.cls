@@ -1,3 +1,10 @@
+/**
+ * RollupHelper_Test
+ * @see https://gist.github.com/grotib/838a40928d17d241f974319f04336bc3/edit
+ * 
+ * @version 1.0
+ * @author Thibault Weber - SYNEFO
+ */
 @isTest
 private class RollupHelper_Test {
 
