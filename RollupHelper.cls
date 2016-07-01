@@ -3,7 +3,7 @@ public class RollupHelper {
 	//Liste des types d'aggregation possibles
 	public Enum Aggregation {COUNT, SUM, MIN, MAX, CONCAT}
 	
-	//Liste des opérateurs disponibles dans les conditions de Rollup
+	//Liste des opérateurs disponibles dans les filters de Rollup
 	public Enum Operator {
 						EQ, 
 						NOT_EQ,
@@ -274,7 +274,7 @@ public class RollupHelper {
 		private Schema.sObjectField fieldToRollup;
 		private String concatSeparator;
 		private String concatOrderBy;
-		private List<RollupCondition> conditions = new List<RollupCondition>();
+		private List<RollupFilter> filters = new List<RollupFilter>();
 		
 		private Schema.DisplayType rollupFieldType;
 		
@@ -320,8 +320,8 @@ public class RollupHelper {
 		 * @param Operator operator : L'operateur de la condition (egal, supérieur, contient, ...), Cf. Enum "Operator"
 		 * @param Object value : La valeur du filtre
 		 */
-		public void addCondition(Schema.sObjectField field, Operator operator, Object value){
-			this.conditions.add(new RollupCondition(field, operator, value));
+		public void addFilter(Schema.sObjectField field, Operator operator, Object value){
+			this.filters.add(new RollupFilter(field, operator, value));
 		}
 		
 		
@@ -336,8 +336,8 @@ public class RollupHelper {
 			if(this.fieldToRollup != null)
 				fieldsToQuery.add(this.fieldToRollup.getDescribe().getName());		//Le champ à aggréger sur l'objet enfant
 			
-			if(!this.conditions.isEmpty()){
-				for(RollupCondition cond : this.conditions)
+			if(!this.filters.isEmpty()){
+				for(RollupFilter cond : this.filters)
 					fieldsToQuery.add(cond.field.getDescribe().getName());		//Le champ sur lequel on a une condition
 			}
 			
@@ -346,14 +346,14 @@ public class RollupHelper {
 		
 		
 		/**
-		 * Vérifie si un record vérifie toutes les conditions du Rollup
+		 * Vérifie si un record vérifie toutes les filters du Rollup
 		 * 
 		 * @param sObject record: le record à vérifier
-		 * @return Boolean: True si le record satisfait toutes les conditions, False sinon
+		 * @return Boolean: True si le record satisfait toutes les filters, False sinon
 		 */
 		private Boolean recordFulfillCondition(sObject record){
 
-			for(RollupCondition cond : this.conditions){
+			for(RollupFilter cond : this.filters){
 				if(!cond.recordFulfillCondition(record))
 					return false;
 			}
@@ -412,7 +412,7 @@ public class RollupHelper {
 	 * Wrapper class correspondant à une condition de Rollup
 	 * 
 	 */
-	private class RollupCondition{
+	private class RollupFilter{
 		
 		private Schema.sObjectField field;
 		private Operator ope;
@@ -426,7 +426,7 @@ public class RollupHelper {
 		 * @param Operator operator : L'operateur de la condition (egal, supérieur, contient, ...), Cf. Enum "Operator"
 		 * @param Object value : La valeur du filtre
 		 */
-		private RollupCondition(Schema.sObjectField field, Operator operator, Object value){
+		private RollupFilter(Schema.sObjectField field, Operator operator, Object value){
 			this.field = field;
 			this.ope = operator;
 			this.value = String.valueOf(value);
@@ -472,14 +472,9 @@ public class RollupHelper {
 			else if(this.ope == Operator.NOT_STARTS_WITH_IGNORE_CASE)
 				return !fieldValue.startsWithIgnoreCase(this.value);
 				
-			
 			return false;
-			
 		}
 		
-		
 	}
-	
-	
 	
 }
