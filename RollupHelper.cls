@@ -10,7 +10,7 @@
 public class RollupHelper {
 
 	//Liste des types d'aggregation possibles
-	public Enum Aggregation {COUNT, SUM, MIN, MAX, CONCAT}
+	public Enum Aggregation {COUNT, SUM, MIN, MAX, CONCAT, AVG}
 	
 	//Liste des opérateurs disponibles dans les filtres de Rollup
 	public Enum Operator {
@@ -162,15 +162,20 @@ public class RollupHelper {
 		 * 
 		 */
 			sObject parentRecord;
-			for(sObject child : Database.query(childrenQuery)){
-				
-				for(Rollup rollup : this.rollups){
-					
+			for(Rollup rollup : this.rollups){
+			    List<sObject> children = Database.query(childrenQuery);
+			    for(sObject child : children){
 					if(rollup.recordFulfillCondition(child)){
+					    parentRecord = this.parentsById.get((Id) child.get(this.lookupField));
 						rollup.aggregateRecordValue(this.parentsById.get((Id) child.get(this.lookupField)), child);
 					}
 				}
+				
+				if(rollup.aggr == Aggregation.AVG && parentRecord != null && ((Decimal)parentRecord.get(rollup.rollupField)) != null)
+				    parentRecord.put(rollup.rollupField, ((Decimal)parentRecord.get(rollup.rollupField))/children.size());
 			}
+			
+			
 		
 		
 		/**
@@ -256,11 +261,30 @@ public class RollupHelper {
 		else
 			return (getMax(value1, value2) == value1 ? value2 : value1);
 	}
-	
-	
-	
-	
-	
+
+
+    /**
+     * Retourne la valeur passée en paramètre ou 0 si cette valeur est nulle
+     *
+     * @param value
+     *
+     * @return la valeur passée en paramètre ou 0 si cette valeur est nulle
+     */
+    private static Integer getIntegerValue(Object value){
+        return (value == null ? 0 : (Integer) value);
+    }
+
+
+    /**
+     * Retourne la valeur passée en paramètre ou 0 si cette valeur est nulle
+     *
+     * @param value
+     *
+     * @return la valeur passée en paramètre ou 0 si cette valeur est nulle
+     */
+    private static Decimal getDecimalValue(Object value){
+        return (value == null ? 0 : (Decimal) value);
+    }
 	
 	
 	/********************************************************************************************************************************/
@@ -278,8 +302,8 @@ public class RollupHelper {
 	 */
 	public class Rollup{
 		
-		private Schema.sObjectField rollupField;
-		private Aggregation aggr;
+		protected Schema.sObjectField rollupField;
+		protected Aggregation aggr;
 		private Schema.sObjectField fieldToRollup;
 		private String concatSeparator;
 		private String concatOrderBy;
@@ -297,7 +321,7 @@ public class RollupHelper {
 		
 		
 		/**
-		 * Constructeur pour les Rollup de type SUM, MAX & MIN
+		 * Constructeur pour les Rollup de type SUM, MAX, MIN et AVG
 		 */
 		public Rollup(Schema.sObjectField rollupField, Aggregation aggregation, Schema.sObjectField fieldToRollup){
 			this(rollupField, aggregation, fieldToRollup, null, null);
@@ -320,6 +344,9 @@ public class RollupHelper {
 			
 			this.rollupFieldType = rollupField.getDescribe().getType();
 		}
+		
+		
+		
 		
 		
 		/**
@@ -391,17 +418,26 @@ public class RollupHelper {
 				oldValue = parentRecord.get(this.rollupField);
 				valueToAggregate = (this.aggr == Aggregation.COUNT ? 1 : childRecord.get(this.fieldToRollup));
 				
-				if(this.aggr == Aggregation.MAX)
-					newValue = getMax(oldValue, valueToAggregate);	
-				else if(this.aggr == Aggregation.MIN)
-					newValue = getMin(oldValue, valueToAggregate);
-				else if(this.aggr == Aggregation.CONCAT)
-					newValue = (oldValue == null ? '' : oldValue + this.concatSeparator) + valueToAggregate;
-				else if(this.rollupFieldType == Schema.DisplayType.Integer)	
-					newValue = (Integer) oldValue + (Integer) valueToAggregate;
-				else
-					newValue = (Decimal) oldValue + (Decimal) valueToAggregate;
+				if(this.aggr == Aggregation.MAX) {
+                    newValue = getMax(oldValue, valueToAggregate);
+                }
+				else if(this.aggr == Aggregation.MIN) {
+                    newValue = getMin(oldValue, valueToAggregate);
+                }
+				else if(this.aggr == Aggregation.CONCAT) {
+                    newValue = (oldValue == null ? '' : oldValue + this.concatSeparator) + valueToAggregate;
+                }
+				else if(this.aggr == Aggregation.AVG){	
+					newValue = oldValue != null ? (Decimal) oldValue + (Decimal) valueToAggregate : 0 + (Decimal) valueToAggregate;
+				}
+				else if(this.rollupFieldType == Schema.DisplayType.Integer) {
+                    newValue = getIntegerValue(oldValue) + getIntegerValue(valueToAggregate);
+                }
+				else {
+                    newValue = getDecimalValue(oldValue) + getDecimalValue(valueToAggregate);
+                }
 			}
+			
 			
 			parentRecord.put(this.rollupField, newValue);
 				
