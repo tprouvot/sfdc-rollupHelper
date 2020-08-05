@@ -52,10 +52,12 @@ public class RollupHelper {
 	 * 
 	 * @param Schema.sObjectField lookupField: le champ Lookup faisant la liaison entre l'enfant et le parent
 	 */
-	public RollupHelper(Schema.sObjectField lookupField){
-		
-		this(Trigger.isDelete ? Trigger.old : Trigger.new, lookupField);
-		
+	public RollupHelper(Schema.sObjectField lookupField){		
+		this(Trigger.isDelete ? Trigger.old : Trigger.new, lookupField);		
+	}
+	
+	public RollupHelper(Schema.sObjectField lookupField, Boolean useOldMap){		
+		this(Trigger.isDelete || useOldMap ? Trigger.old : Trigger.new, lookupField);		
 	}
 	
 	
